@@ -4,6 +4,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import pandas as pd
 
 class irrigation_field():
     '''
@@ -41,7 +42,7 @@ class irrigation_field():
                         if self.field[j][k] > self.water_benefit and self.field[j][k] != self.sprinkler_cost - 0.5:
                             self.field[j][k] = self.field[j][k] + self.water_benefit
             except IndexError:
-                print('List index was out of range')
+                pass
         
         for i in range(self.number_of_sprinklers):
             turn_on_sprinkler(self)
@@ -51,7 +52,7 @@ class irrigation_field():
         '''
         Returns the score of the layout, which is simply the sum of the matrix
         '''
-        return np.sum(self.field)
+        return -np.sum(self.field)
 ##   We'll ignore the pipes for now
 #    def add_pipe(self, pipe_cost=1):
 #        self.pipe_x = 0
@@ -68,14 +69,43 @@ class irrigation_field():
         plt.show()
         
     def generate_population(self, population_size=50):
+        '''
+        Generates a population of by default size 50.
+        '''
         self.population_size = population_size
-        self.population = []
-        for _ in range(population_size):
+        self.population = pd.DataFrame(columns=['sprinkler_species', 'score'], index=[x for x in range(self.population_size)])
+        for i in range(population_size):
             self.sprinkler_species = self.add_sprinklers()
             self.score_for_layout = self.score()
-            self.population.append([self.sprinkler_species, self.score_for_layout])
+            self.population['sprinkler_species'][i] = self.sprinkler_species
+            self.population['score'][i] = self.score_for_layout
             self.field = np.zeros(self.input_size)
         return self.population
+        
+    def rank_population(self):
+        '''
+        Ranks the population by score.
+        '''
+        self.population = self.population.sort_values(by='score', ascending=False)
+        self.population = self.population.reset_index()
+        return self.population
+        
+    def select_from_population(self, best_sample_count=10, lucky_few_count=5):
+        '''
+        Selects the top best_sample_count species and picks lucky_few_count outside of the
+        top species.
+        '''
+        self.best_sample_count = best_sample_count
+        self.lucky_few_count = lucky_few_count
+        self.next_generation = pd.DataFrame(columns=['index', 'sprinkler_species', 'score'], index=[x for x in range(self.population_size)])
+        self.next_generation[:self.best_sample_count] = self.population[:self.best_sample_count]
+#        self.next_generation[self.best_sample_count:self.best_sample_count+self.lucky_few_count] = self.population[self.best_sample_count:].sample(self.lucky_few_count)
+        self.sample_ex = self.population[self.best_sample_count:].sample(self.lucky_few_count)
+        self.next_generation.iloc[self.best_sample_count:self.best_sample_count+self.lucky_few_count] = self.sample_ex
+        return self.next_generation, self.sample_ex
+        
+        
+
                 
         
     def __str__(self):
@@ -86,4 +116,7 @@ x.add_sprinklers(sprinkler_cost=4)
 print(x.score())
 #print(x)
 x.display_field_as_image()
-x = x.generate_population()
+x.generate_population()
+x.rank_population()
+x, y = x.select_from_population()
+#df2 = df.sort_values(by='y', ascending=False)
