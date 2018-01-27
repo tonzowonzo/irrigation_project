@@ -98,12 +98,12 @@ class irrigation_field():
         self.best_sample_count = best_sample_count
         self.lucky_few_count = lucky_few_count
         self.next_generation = pd.DataFrame(columns=['index', 'sprinkler_species', 'score'], index=[x for x in range(self.population_size)])
-        self.next_generation[:self.best_sample_count] = self.population[:self.best_sample_count]
-#        self.next_generation[self.best_sample_count:self.best_sample_count+self.lucky_few_count] = self.population[self.best_sample_count:].sample(self.lucky_few_count)
-        self.sample_ex = self.population[self.best_sample_count:].sample(self.lucky_few_count)
-        self.next_generation.iloc[self.best_sample_count:self.best_sample_count+self.lucky_few_count] = self.sample_ex
-        return self.next_generation, self.sample_ex
+        self.next_generation.iloc[:self.best_sample_count] = self.population[:self.best_sample_count]
+        self.next_generation[self.best_sample_count:] = self.population[self.best_sample_count:].sample(self.lucky_few_count)
+        self.population = self.next_generation
+        return self.population
         
+    def create_child(individual1, individual2):
         
 
                 
@@ -118,5 +118,5 @@ print(x.score())
 x.display_field_as_image()
 x.generate_population()
 x.rank_population()
-x, y = x.select_from_population()
+x = x.select_from_population()
 #df2 = df.sort_values(by='y', ascending=False)
