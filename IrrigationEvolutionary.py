@@ -46,7 +46,7 @@ class irrigation_field():
         
         for i in range(self.number_of_sprinklers):
             turn_on_sprinkler(self)
-        return self.field
+        return self.field, self.sprinkler_coords
         
     def score(self):
         '''
@@ -73,12 +73,13 @@ class irrigation_field():
         Generates a population of by default size 50.
         '''
         self.population_size = population_size
-        self.population = pd.DataFrame(columns=['sprinkler_species', 'score'], index=[x for x in range(self.population_size)])
+        self.population = pd.DataFrame(columns=['sprinkler_species', 'score', 'sprinker_coords'], index=[x for x in range(self.population_size)])
         for i in range(population_size):
-            self.sprinkler_species = self.add_sprinklers()
+            self.sprinkler_species, self.sprinkler_coords_for_species = self.add_sprinklers()
             self.score_for_layout = self.score()
             self.population['sprinkler_species'][i] = self.sprinkler_species
             self.population['score'][i] = self.score_for_layout
+            self.population['sprinker_coords'][i] = self.sprinkler_coords_for_species
             self.field = np.zeros(self.input_size)
         return self.population
         
@@ -97,13 +98,19 @@ class irrigation_field():
         '''
         self.best_sample_count = best_sample_count
         self.lucky_few_count = lucky_few_count
-        self.next_generation = pd.DataFrame(columns=['index', 'sprinkler_species', 'score'], index=[x for x in range(self.population_size)])
+        self.next_generation = pd.DataFrame(columns=['index', 'sprinkler_species', 'score', 'sprinkler_coords'], index=[x for x in range(self.population_size)])
         self.next_generation.iloc[:self.best_sample_count] = self.population[:self.best_sample_count]
         self.next_generation[self.best_sample_count:] = self.population[self.best_sample_count:].sample(self.lucky_few_count)
         self.population = self.next_generation
         return self.population
         
-    def create_child(individual1, individual2):
+    def create_child(self, parent1, parent2):
+        self.child = []
+        self.parent1 = parent1
+        self.parent2 = parent2
+        for i, coord in enumerate(self.parent1):
+            self.child.append((int(coord[0] + self.parent2[i][0] / 2), int(coord[1] + self.parent2[i][1])))
+        return self.child
         
 
                 
@@ -118,5 +125,5 @@ print(x.score())
 x.display_field_as_image()
 x.generate_population()
 x.rank_population()
-x = x.select_from_population()
-#df2 = df.sort_values(by='y', ascending=False)
+z = x.select_from_population()
+y = x.create_child(z['sprinkler_coords'][1], z['sprinkler_coords'][2])
