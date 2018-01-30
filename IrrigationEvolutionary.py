@@ -111,10 +111,15 @@ class irrigation_field():
         for i, coord in enumerate(self.parent1):
             self.child.append((int(coord[0] + self.parent2[i][0] / 2), int(coord[1] + self.parent2[i][1])))
         return self.child
-        
-
-                
-        
+     
+    def create_next_generation(self):
+        for i in range(self.population_size):
+            parent1_index = random.randint(len(self.population))
+            parent2_index = random.randint(len(self.population))
+            child = self.create_child(self.population.sprinkler_coords[parent1_index], self.population.sprinkler_coords[parent2_index])
+            self.next_generation.iloc[0:0]
+            self.next_generation.sprinkler_coords[i] = child
+            
     def __str__(self):
         return str(self.field)
         
