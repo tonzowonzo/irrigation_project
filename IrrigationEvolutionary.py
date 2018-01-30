@@ -31,22 +31,21 @@ class irrigation_field():
         self.sprinkler_cost = sprinkler_cost
         self.water_benefit = water_benefit
         
-        def turn_on_sprinkler(self):
-            '''
-            Adds the surrounding water to a sprinkler.
-            '''
-            try:
+    def turn_on_sprinkler(self):
+        '''
+        Adds the surrounding water to a sprinkler.
+        '''
+        try:
+            for i in range(self.number_of_sprinklers):
                 self.field[self.sprinkler_coords[i][0]][self.sprinkler_coords[i][1]] = self.sprinkler_cost # Places a sprinkler.
                 for j in range(self.sprinkler_coords[i][0]-self.sprinkler_range, self.sprinkler_coords[i][0]+self.sprinkler_range+1):
                     for k in range(self.sprinkler_coords[i][1]-self.sprinkler_range, self.sprinkler_coords[i][1]+self.sprinkler_range+1):
                         if self.field[j][k] > self.water_benefit and self.field[j][k] != self.sprinkler_cost - 0.5:
                             self.field[j][k] = self.field[j][k] + self.water_benefit
-            except IndexError:
-                pass
-        
-        for i in range(self.number_of_sprinklers):
-            turn_on_sprinkler(self)
+        except IndexError:
+            pass
         return self.field, self.sprinkler_coords
+        
         
     def score(self):
         '''
@@ -75,7 +74,7 @@ class irrigation_field():
         self.population_size = population_size
         self.population = pd.DataFrame(columns=['sprinkler_species', 'score', 'sprinker_coords'], index=[x for x in range(self.population_size)])
         for i in range(population_size):
-            self.sprinkler_species, self.sprinkler_coords_for_species = self.add_sprinklers()
+            self.sprinkler_species, self.sprinkler_coords_for_species = self.turn_on_sprinkler()
             self.score_for_layout = self.score()
             self.population['sprinkler_species'][i] = self.sprinkler_species
             self.population['score'][i] = self.score_for_layout
@@ -101,7 +100,9 @@ class irrigation_field():
         self.next_generation = pd.DataFrame(columns=['index', 'sprinkler_species', 'score', 'sprinkler_coords'], index=[x for x in range(self.population_size)])
         self.next_generation.iloc[:self.best_sample_count] = self.population[:self.best_sample_count]
         self.next_generation[self.best_sample_count:] = self.population[self.best_sample_count:].sample(self.lucky_few_count)
-        self.population = self.next_generation
+        self.population = self.next_generation.copy()
+        self.population = self.population.dropna()
+        self.population = self.population.reset_index()
         return self.population
         
     def create_child(self, parent1, parent2):
@@ -113,18 +114,24 @@ class irrigation_field():
         return self.child
      
     def create_next_generation(self):
+        self.children = []
+        self.children_fields = []
         for i in range(self.population_size):
-            parent1_index = random.randint(len(self.population))
-            parent2_index = random.randint(len(self.population))
+            parent1_index = random.randint(0, self.best_sample_count+self.lucky_few_count - 1)
+            parent2_index = random.randint(0, self.best_sample_count+self.lucky_few_count - 1)
             child = self.create_child(self.population.sprinkler_coords[parent1_index], self.population.sprinkler_coords[parent2_index])
-            self.next_generation.iloc[0:0]
-            self.next_generation.sprinkler_coords[i] = child
+            self.sprinkler_coords = child[i]
+            self.children.append(child)
+            self.turn_on_sprinkler()
+
+        return self.children
             
     def __str__(self):
         return str(self.field)
         
 x = irrigation_field()
 x.add_sprinklers(sprinkler_cost=4)
+x.turn_on_sprinkler()
 print(x.score())
 #print(x)
 x.display_field_as_image()
@@ -132,3 +139,4 @@ x.generate_population()
 x.rank_population()
 z = x.select_from_population()
 y = x.create_child(z['sprinkler_coords'][1], z['sprinkler_coords'][2])
+e = x.create_next_generation()
