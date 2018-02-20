@@ -19,7 +19,8 @@ class irrigation_field():
         self.input_size = input_size
         self.number_of_sprinklers = number_of_sprinklers
         self.field = np.zeros(input_size)
-    
+        self.generation = 0
+        
     def add_sprinklers(self, sprinkler_cost=2, sprinkler_range=2, water_benefit=-0.5):
         '''
         Function to add sprinklers to the field.
@@ -30,6 +31,7 @@ class irrigation_field():
         self.sprinkler_coords = list(zip(self.sprinkler_y, self.sprinkler_x))
         self.sprinkler_cost = sprinkler_cost
         self.water_benefit = water_benefit
+        print(self.sprinkler_coords)
         
     def turn_on_sprinkler(self):
         '''
@@ -49,7 +51,7 @@ class irrigation_field():
         
     def score(self):
         '''
-        Returns the score of the layout, which is simply the sum of the matrix
+        Returns the score of the layout, which is simply the negative sum of the matrix.
         '''
         return -np.sum(self.field)
 ##   We'll ignore the pipes for now
@@ -110,20 +112,33 @@ class irrigation_field():
         self.parent1 = parent1
         self.parent2 = parent2
         for i, coord in enumerate(self.parent1):
-            self.child.append((int(coord[0] + self.parent2[i][0] / 2), int(coord[1] + self.parent2[i][1])))
+            self.child.append(((int(coord[0] + self.parent2[i][0]) / 2), (int(coord[1] + self.parent2[i][1]) / 2)))
         return self.child
-     
+    
+    def mutate_child(self, mutation_rate=0.1):
+        '''
+        Slightly change the genetic makeup of some of the children.
+        '''
+        self.mutation_rate = mutation_rate
+        
+        
+        
+        
+        
     def create_next_generation(self):
         self.children = []
         self.children_fields = []
         for i in range(self.population_size):
-            parent1_index = random.randint(0, self.best_sample_count+self.lucky_few_count - 1)
-            parent2_index = random.randint(0, self.best_sample_count+self.lucky_few_count - 1)
-            child = self.create_child(self.population.sprinkler_coords[parent1_index], self.population.sprinkler_coords[parent2_index])
-            self.sprinkler_coords = child[i]
-            self.children.append(child)
-            self.turn_on_sprinkler()
-
+            self.parent1_index = random.randint(0, self.best_sample_count+self.lucky_few_count - 1)
+            self.parent2_index = random.randint(0, self.best_sample_count+self.lucky_few_count - 1)
+            print(self.parent1_index, self.parent2_index)
+            self.kid = self.create_child(self.population.sprinkler_coords[self.parent1_index], self.population.sprinkler_coords[self.parent2_index])
+            print(self.population.sprinkler_coords[1], self.population.sprinkler_coords[5])
+#            self.sprinkler_coords = child[i]
+            self.children.append(self.kid)
+#            self.turn_on_sprinkler()
+        self.generation += 1
+        self.sprinkler_coords = self.children
         return self.children
             
     def __str__(self):
@@ -134,9 +149,9 @@ x.add_sprinklers(sprinkler_cost=4)
 x.turn_on_sprinkler()
 print(x.score())
 #print(x)
-x.display_field_as_image()
-x.generate_population()
+f = x.generate_population()
 x.rank_population()
 z = x.select_from_population()
 y = x.create_child(z['sprinkler_coords'][1], z['sprinkler_coords'][2])
 e = x.create_next_generation()
+
